@@ -7,7 +7,7 @@ library(factoextra)  # Pour l'analyse ACP
 library(DT)  
 
 function(input, output, session) {
-  # Chargement des données avec mémoisation pour meilleure performance
+  # Chargement des données avec mémorisation pour meilleure performance
   dataset <- reactive({
     data <- read.csv("Dataset/data.csv") %>% 
       select(-id, -X) %>%  # Suppression des colonnes inutiles
@@ -128,6 +128,113 @@ function(input, output, session) {
                 )
               ))
   })
+  # Fonction pour lire les datasets avec aperçu
+  load_dataset_preview <- function(dataset_name, n_rows = 50) {
+    tryCatch({
+      if(dataset_name == "wisc") {
+        data <- read.csv("Dataset/data.csv", nrows = n_rows) %>% 
+          select(-id, -X) %>% 
+          mutate(diagnosis = factor(diagnosis, levels = c("B", "M"), labels = c("Bénin", "Malin")))
+        return(data)
+      }
+      else if(dataset_name == "seer") {
+        return(read.csv("Dataset/SEER_Breast_Cancer_Dataset.csv", nrows = n_rows))
+      }
+      else if(dataset_name == "metabric") {
+        return(read.csv("Dataset/METABRIC_RNA_Mutation.csv", nrows = n_rows))
+      }
+    }, error = function(e) {
+      data.frame(Error = paste("Erreur de lecture :", e$message))
+    })
+  }
+  
+  # Réactive pour l'aperçu des données
+  dataset_preview <- reactive({
+    req(input$dataset_choice, input$preview_rows)
+    load_dataset_preview(input$dataset_choice, input$preview_rows)
+  })
+  
+  # Description des datasets
+  output$dataset_desc <- renderUI({
+    desc <- switch(input$dataset_choice,
+                   "wisc" = "<b>Breast Cancer Wisconsin</b><br>569 observations, 32 variables<br>Caractéristiques des noyaux cellulaires",
+                   "seer" = "<b>SEER Breast Cancer Dataset</b><br>4024 observations<br>Données épidémiologiques de surveillance",
+                   "metabric" = "<b>METABRIC Gene Expression</b><br>2509 observations<br>Profil d'expression génique")
+    
+    HTML(paste(desc, "<br><br>Source: Kaggle"))
+  })
+  
+  # Titre du dataset
+  output$dataset_title <- renderText({
+    switch(input$dataset_choice,
+           "wisc" = "Aperçu: Wisconsin Breast Cancer",
+           "seer" = "Aperçu: SEER Breast Cancer",
+           "metabric" = "Aperçu: METABRIC Gene Expression")
+  })
+  
+  # Dimensions complètes du dataset
+  output$dataset_dimensions <- renderUI({
+    paths <- c(
+      "wisc" = "Dataset/data.csv",
+      "seer" = "Dataset/SEER_Breast_Cancer_Dataset.csv",
+      "metabric" = "Dataset/METABRIC_RNA_Mutation.csv"
+    )
+    
+    full_path <- paths[input$dataset_choice]
+    
+    if(file.exists(full_path)) {
+      con <- file(full_path, "r")
+      n_lines <- length(readLines(con))
+      close(con)
+      
+      cols <- ncol(read.csv(full_path, nrows = 1))
+      
+      HTML(paste0("<div class='alert alert-success'>",
+                  "Dimensions complètes: ", n_lines, " lignes × ", cols, " colonnes",
+                  "</div>"))
+    } else {
+      HTML(paste0("<div class='alert alert-danger'>Fichier non trouvé: ", full_path, "</div>"))
+    }
+  })
+  
+  # CORRECTION : Output renommé
+  output$dataset_table <- renderDT({
+    preview_data <- dataset_preview()
+    
+    if("Error" %in% names(preview_data)) {
+      return(datatable(data.frame(Message = preview_data$Error)))
+    }
+    
+    datatable(preview_data,
+              options = list(
+                scrollX = TRUE,
+                dom = 't',
+                language = list(
+                  search = "Rechercher:",
+                  paginate = list(previous = 'Précédent', `next` = 'Suivant')
+                )
+              ))
+  })
+  
+  # Téléchargement des données complètes
+  output$download_data <- downloadHandler(
+    filename = function() {
+      paste0(input$dataset_choice, "_data.csv")
+    },
+    content = function(file) {
+      paths <- c(
+        "wisc" = "Dataset/data.csv",
+        "seer" = "Dataset/SEER_Breast_Cancer_Dataset.csv",
+        "metabric" = "Dataset/METABRIC_RNA_Mutation.csv"
+      )
+      
+      full_path <- paths[input$dataset_choice]
+      
+      if(file.exists(full_path)) {
+        file.copy(full_path, file)
+      }
+    }
+  )
   
   
 }
