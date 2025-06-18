@@ -56,31 +56,26 @@ ui <- navbarPage(
            )
   ),
   
+  # Onglet Jeux de Données
   tabPanel("Jeux de Données",
            sidebarLayout(
              sidebarPanel(
                selectInput("dataset_choice", "Choisir le jeu de données :",
-                           choices = c("Wisconsin Breast Cancer" = "wisc",
-                                       "SEER Breast Cancer" = "seer",
-                                       "METABRIC Gene Expression" = "metabric")),
-               hr(),
-               h4("Description du jeu sélectionné"),
-               htmlOutput("dataset_desc"),
+                           choices = c("data" = "data",
+                                       "SEER Breast Cancer" = "seer")),
+               uiOutput("dataset_details"),
                br(),
-               sliderInput("preview_rows", "Nombre de lignes à afficher :",
-                           min = 5, max = 50, value = 10),
                downloadButton("download_data", "Télécharger (.csv)")
              ),
              mainPanel(
                h3(textOutput("dataset_title")),
-               # CORRECTION : changer le nom de l'output
-               DT::dataTableOutput("dataset_table"),  # Modifié ici
+               DT::dataTableOutput("dataset_table"),
                htmlOutput("dataset_dimensions")
              )
            )
   ),
   
-  # Onglet Modélisation (à implémenter)
+  # Onglet Modélisation
   tabPanel("Modélisation Prédictive",
            fluidPage(
              h3("Construction de modèles prédictifs")
