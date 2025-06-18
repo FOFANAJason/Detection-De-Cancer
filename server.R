@@ -45,6 +45,63 @@ function(input, output, session) {
     
   })
   
+  # Dictionnaire de traduction SEER
+  french_names_seer <- c(
+    "Age" ="Age",
+    "Marital.Status" = "Etat_civil",
+    "Status"="Statut_Survie",
+    "T.Stage"="Stade_T",
+    "X6th.Stage"="X6th.Stage",
+    "Tumor.size" = "Taille_tumeur",
+    "Regional.Node.Examined" = "Ganglions_examinés",
+    "Survival.Months" = "Mois_de_survie",
+    "N.Stage"= "Stade_N",
+    "A.Stage"= "Stade_Metastatique",
+    "Grade"= "Grade_Tumoral",
+    "Tumor.Size"= "Taille_Tumeur",
+    "Estrogen.Status"= "Statut_Recepteurs_Estrogenes",
+    "Progesterone.Status"= "Statut_Recepteurs_Progesterone",
+    "Reginol.Node.Positive"= "Ganglions_Positifs",
+    "Race"="Race"
+  )
+  
+  # 
+  output$dataset_details <- renderUI({
+    if(input$dataset_choice == "data") {
+      tagList(
+        h4("Détails du jeu de données 'data'"),
+        p("Ce jeu de données contient des caractéristiques dérivées d'images numérisées de masses mammaires, utilisées pour diagnostiquer des tumeurs cancéreuses. Chaque ligne représente une observation de cellule,décrivant des attributs morphologiques."),
+        p("Modifications apportées:"),
+        tags$ul(
+          tags$li("Suppression des colonnes 'id' et 'X'"),
+          tags$li("Recodage de la variable 'diagnosis' : B -> Bénin, M -> Malin"),
+          tags$li("Changement du nom des variables")
+        )
+      )
+    } else if(input$dataset_choice == "seer") {
+      tagList(
+        h4("Détails du jeu de données 'SEER Breast Cancer'"),
+        p("Cet ensemble de données cliniques capture le parcours médical des patientes atteintes d'un cancer du sein, documenté par le programme SEER (Surveillance, Epidemiology, and End Results). Chaque observation révèle l'interaction complexe entre les caractéristiques tumorales et les facteurs démographiques qui influencent le pronostic vital."),
+        p("Après nettoyage (suppression d'une colonne vide), 8 variables sont réellement importantes pour prédire Statut_Survie:"),
+        tags$ul(
+          tags$li(tags$b("Stade_T"), ": Stade de la tumeur primaire (T1 à T4). Plus élevé = pronostic plus sombre."),
+          tags$li(tags$b("Stage_N"), ": Atteinte des ganglions lymphatiques (N0 à N3). Critère pronostique majeur."),
+          tags$li(tags$b("Stade_Metastatique"), ": Présence de métastases (Regional vs Distant). Les métastases réduisent radicalement la survie."),
+          tags$li(tags$b("Grade_Tumoral"), ": Agressivité tumorale (Grade I à IV). Grade III/IV = risque accru de décès."),
+          tags$li(tags$b("Taille_Tumeur"), ": Taille réelle de la tumeur (en mm). >20 mm = pronostic réservé."),
+          tags$li(tags$b("Statut_Recepteurs_Estrogenes"), ": Tumeurs ER+ = meilleure réponse au traitement hormonal."),
+          tags$li(tags$b("Statut_Recepteurs_Progesterone"), ": Tumeurs PR+ = survie prolongée."),
+          tags$li(tags$b("Ganglions_Positifs"), ": Nombre de ganglions envahis. >3 ganglions = pronostic défavorable.")
+        ),
+        p("Modifications apportées:"),
+        tags$ul(
+          tags$li("Suppression de la colonne 'X' contenant des NA"),
+          tags$li("Changement du nom des variables")
+        )
+      )
+    }
+  })
+  
   output$dataset_info <- renderText({
     data <- dataset()
     n_obs <- nrow(data)
@@ -131,18 +188,25 @@ function(input, output, session) {
   # Fonction pour lire les datasets avec aperçu
   load_dataset_preview <- function(dataset_name, n_rows = 50) {
     tryCatch({
-      if(dataset_name == "wisc") {
+      if(dataset_name == "data") {
         data <- read.csv("Dataset/data.csv", nrows = n_rows) %>% 
           select(-id, -X) %>% 
           mutate(diagnosis = factor(diagnosis, levels = c("B", "M"), labels = c("Bénin", "Malin")))
         return(data)
       }
       else if(dataset_name == "seer") {
-        return(read.csv("Dataset/SEER_Breast_Cancer_Dataset.csv", nrows = n_rows))
+        data <- read.csv("Dataset/SEER_Breast_Cancer_Dataset.csv", nrows = n_rows) %>%
+        select(-X)  # Suppression de la colonne X
+        
+        # Application la traduction des variables
+        idx <- match(names(data), names(french_names_seer))
+        new_names <- ifelse(is.na(idx), names(data), french_names_seer[idx])
+        
+        names(data) <- new_names
+        return(data)
+        
       }
-      else if(dataset_name == "metabric") {
-        return(read.csv("Dataset/METABRIC_RNA_Mutation.csv", nrows = n_rows))
-      }
+      
     }, error = function(e) {
       data.frame(Error = paste("Erreur de lecture :", e$message))
     })
@@ -157,9 +221,9 @@ function(input, output, session) {
   # Description des datasets
   output$dataset_desc <- renderUI({
     desc <- switch(input$dataset_choice,
-                   "wisc" = "<b>Breast Cancer Wisconsin</b><br>569 observations, 32 variables<br>Caractéristiques des noyaux cellulaires",
-                   "seer" = "<b>SEER Breast Cancer Dataset</b><br>4024 observations<br>Données épidémiologiques de surveillance",
-                   "metabric" = "<b>METABRIC Gene Expression</b><br>2509 observations<br>Profil d'expression génique")
+                   "data" = "<b>Data</b><br>569 observations, 32 variables<br>Caractéristiques des noyaux cellulaires",
+                   "seer" = "<b>SEER Breast Cancer Dataset</b><br>4024 observations<br>Données épidémiologiques de surveillance")
+                   
     
     HTML(paste(desc, "<br><br>Source: Kaggle"))
   })
@@ -167,74 +231,77 @@ function(input, output, session) {
   # Titre du dataset
   output$dataset_title <- renderText({
     switch(input$dataset_choice,
-           "wisc" = "Aperçu: Wisconsin Breast Cancer",
-           "seer" = "Aperçu: SEER Breast Cancer",
-           "metabric" = "Aperçu: METABRIC Gene Expression")
+           "data" = "Aperçu: Data",
+           "seer" = "Aperçu: SEER Breast Cancer")
   })
   
-  # Dimensions complètes du dataset
+
+  # Fonction pour charger les datasets 
+  load_full_dataset <- function(dataset_name) {
+    if(dataset_name == "data") {
+      data <- read.csv("Dataset/data.csv") %>% 
+        select(-id, -X) %>% 
+        mutate(diagnosis = factor(diagnosis, levels = c("B", "M"), labels = c("Bénin", "Malin")))
+      return(data)
+    } 
+    else if(dataset_name == "seer") {
+      data <- read.csv("Dataset/SEER_Breast_Cancer_Dataset.csv") %>%
+        select(-X)
+      
+      # Application la traduction des variables
+      idx <- match(names(data), names(french_names_seer))
+      new_names <- ifelse(is.na(idx), names(data), french_names_seer[idx])
+      names(data) <- new_names
+      
+      return(data)
+    }
+  }
+  
+  # Réactive pour le dataset complet
+  full_dataset <- reactive({
+    req(input$dataset_choice)
+    load_full_dataset(input$dataset_choice)
+  })
+  
+  # Output pour les dimensions
   output$dataset_dimensions <- renderUI({
-    paths <- c(
-      "wisc" = "Dataset/data.csv",
-      "seer" = "Dataset/SEER_Breast_Cancer_Dataset.csv",
-      "metabric" = "Dataset/METABRIC_RNA_Mutation.csv"
-    )
+    data <- full_dataset()
+    n_rows <- nrow(data)
+    n_cols <- ncol(data)
     
-    full_path <- paths[input$dataset_choice]
-    
-    if(file.exists(full_path)) {
-      con <- file(full_path, "r")
-      n_lines <- length(readLines(con))
-      close(con)
-      
-      cols <- ncol(read.csv(full_path, nrows = 1))
-      
-      HTML(paste0("<div class='alert alert-success'>",
-                  "Dimensions complètes: ", n_lines, " lignes × ", cols, " colonnes",
-                  "</div>"))
-    } else {
-      HTML(paste0("<div class='alert alert-danger'>Fichier non trouvé: ", full_path, "</div>"))
-    }
+    HTML(paste0("<div class='alert alert-success'>",
+                "Dimensions complètes: ", n_rows, " lignes × ", n_cols, " colonnes",
+                "</div>"))
   })
   
-  # CORRECTION : Output renommé
+  # Output pour la table
   output$dataset_table <- renderDT({
-    preview_data <- dataset_preview()
+    data <- full_dataset()
     
-    if("Error" %in% names(preview_data)) {
-      return(datatable(data.frame(Message = preview_data$Error)))
-    }
-    
-    datatable(preview_data,
+    datatable(data,
               options = list(
+                pageLength = 10,
+                lengthMenu = c(10, 25, 50, 100, nrow(data)),
                 scrollX = TRUE,
-                dom = 't',
                 language = list(
                   search = "Rechercher:",
-                  paginate = list(previous = 'Précédent', `next` = 'Suivant')
+                  paginate = list(previous = 'Précédent', `next` = 'Suivant'),
+                  lengthMenu = "Afficher _MENU_ lignes"
                 )
               ))
   })
   
-  # Téléchargement des données complètes
+  # Téléchargement
   output$download_data <- downloadHandler(
     filename = function() {
       paste0(input$dataset_choice, "_data.csv")
     },
     content = function(file) {
-      paths <- c(
-        "wisc" = "Dataset/data.csv",
-        "seer" = "Dataset/SEER_Breast_Cancer_Dataset.csv",
-        "metabric" = "Dataset/METABRIC_RNA_Mutation.csv"
-      )
-      
-      full_path <- paths[input$dataset_choice]
-      
-      if(file.exists(full_path)) {
-        file.copy(full_path, file)
-      }
+      write.csv(full_dataset(), file, row.names = FALSE)
     }
   )
+
   
   
 }
+
