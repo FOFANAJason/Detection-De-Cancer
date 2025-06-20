@@ -434,6 +434,7 @@ ui <- navbarPage(
     )
   ),
   
+<<<<<<< HEAD
   # ============= ANALYSE MULTIVARIÉE AVEC INTERPRÉTATIONS =============
   tabPanel(
     title = div(icon("project-diagram"), "Analyse Multivariée"),
@@ -738,5 +739,31 @@ ui <- navbarPage(
         )
       )
     )
+=======
+  # Onglet Jeux de Données
+  tabPanel("Jeux de Données",
+           sidebarLayout(
+             sidebarPanel(
+               selectInput("dataset_choice", "Choisir le jeu de données :",
+                           choices = c("data" = "data",
+                                       "SEER Breast Cancer" = "seer")),
+               uiOutput("dataset_details"),
+               br(),
+               downloadButton("download_data", "Télécharger (.csv)")
+             ),
+             mainPanel(
+               h3(textOutput("dataset_title")),
+               DT::dataTableOutput("dataset_table"),
+               htmlOutput("dataset_dimensions")
+             )
+           )
+  ),
+  
+  # Onglet Modélisation
+  tabPanel("Modélisation Prédictive",
+           fluidPage(
+             h3("Construction de modèles prédictifs")
+           )
+>>>>>>> e26181bbf4e14cfb1214a590844702098c002f4e
   )
 )
