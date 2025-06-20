@@ -45,9 +45,9 @@ charger_donnees_wisconsin <- function() {
                          "symmetry_mean", "fractal_dimension_mean")]
   
   # Nombre d'observations
-  print(table(donnees$diagnosis))
+  # print(table(donnees$diagnosis))
   n <- nrow(donnees)
-  print(paste("Nombre d'observations :", n))
+  # print(paste("Nombre d'observations :", n))
   
   return(donnees)
 }
@@ -57,7 +57,9 @@ charger_donnees_wisconsin <- function() {
 charger_donnees_seer <- function() {
   donnees <- read.csv('Dataset/seer-breast-cancer-dataset.csv')
   
-  n <- nrow(donnees)
+  donnees <- donnees[, c("Age", "Race", "Marital.Status", "T.Stage", "N.Stage", "X6th.Stage", "Grade",
+                         "A.Stage", "Tumor.Size", "Estrogen.Status", "Progesterone.Status", "Regional.Node.Examined",
+                         "Reginol.Node.Positive", "Survival.Months", "Status")]
   
   return(donnees)
 }
@@ -354,6 +356,7 @@ serveur_principal <- function(input, output, session) {
   
   donnees_seer <- reactive({
     charger_donnees_seer()
+    
   })
   
   # ===============================================================================
@@ -378,11 +381,11 @@ serveur_principal <- function(input, output, session) {
     if (input$choix_jeu_donnees == "wisconsin") {
       updateCheckboxGroupInput(session, "colonnes_affichees", 
                                choices = names(donnees_wisconsin()), 
-                               selected = names(donnees_wisconsin())[1:8])
+                               selected = names(donnees_wisconsin()))
     } else {
       updateCheckboxGroupInput(session, "colonnes_affichees", 
                                choices = names(donnees_seer()), 
-                               selected = names(donnees_seer())[1:8])
+                               selected = names(donnees_seer()))
     }
   })
   
@@ -403,7 +406,7 @@ serveur_principal <- function(input, output, session) {
   })
   
   output$taux_survie_global <- renderText({
-    taux <- round(sum(donnees_seer()$status == "Alive") / nrow(donnees_seer()) * 100, 1)
+    taux <- round(sum(donnees_seer()$Status == "Alive") / nrow(donnees_seer()) * 100, 1)
     paste0(taux, "%")
   })
   
@@ -1443,7 +1446,7 @@ serveur_principal <- function(input, output, session) {
       class = 'cell-border stripe hover compact',
       rownames = FALSE
     ) %>%
-      formatStyle('status',
+      formatStyle('Status',
                   backgroundColor = styleEqual(c('Alive', 'Dead'), 
                                                c('#d4edda', '#f8d7da')),
                   fontWeight = 'bold')
@@ -1482,8 +1485,8 @@ serveur_principal <- function(input, output, session) {
       donnees <- donnees_seer()
       nombre_observations <- nrow(donnees)
       nombre_variables <- ncol(donnees)
-      nombre_vivants <- sum(donnees$status == "Alive")
-      nombre_decedes <- sum(donnees$status == "Dead")
+      nombre_vivants <- sum(donnees$Status == "Alive")
+      nombre_decedes <- sum(donnees$Status == "Dead")
       
       HTML(paste0(
         "<h4><i class='fa fa-database'></i> Base de Données SEER sur le Cancer du Sein</h4>",
@@ -1499,7 +1502,7 @@ serveur_principal <- function(input, output, session) {
         "<li>Patients décédés: ", nombre_decedes, " (", round(nombre_decedes/nombre_observations*100, 2), "%)</li>",
         "</ul>",
         "<p><strong>Méthodologie de collecte:</strong> Données cliniques et démographiques collectées de manière prospective dans 18 registres de cancer géographiquement définis.</p>",
-        "<p><strong>Suivi médian:</strong> ", round(median(donnees$survival_months), 1), " mois</p>"
+        "<p><strong>Suivi médian:</strong> ", round(median(donnees$Survival.Months), 1), " mois</p>"
       ))
     }
   })
@@ -1514,9 +1517,14 @@ serveur_principal <- function(input, output, session) {
     
     if(!is.null(input$colonnes_affichees) && length(input$colonnes_affichees) > 0) {
       donnees <- donnees[, input$colonnes_affichees, drop = FALSE]
+      
+      print('========================-------Debut---================= donnees_apercu 2')
+      print(donnees)
+      print('========================-------Fin---================= donnees_apercu 2')
     }
     
     donnees_apercu <- head(donnees, input$lignes_apercu)
+    
     
     datatable(
       donnees_apercu,
@@ -1534,7 +1542,7 @@ serveur_principal <- function(input, output, session) {
       class = 'cell-border stripe hover compact',
       rownames = FALSE
     ) %>%
-      formatStyle(if(input$choix_jeu_donnees == "wisconsin") 'diagnostic_tumoral' else 'status',
+      formatStyle(if(input$choix_jeu_donnees == "wisconsin") 'diagnostic_tumoral' else 'Status',
                   backgroundColor = if(input$choix_jeu_donnees == "wisconsin") 
                     styleEqual(c('Benin', 'Malin'), c('#d4edda', '#f8d7da'))
                   else 
@@ -1572,7 +1580,7 @@ serveur_principal <- function(input, output, session) {
         ylim(0, max(donnees_distribution$Effectif) * 1.15)
     } else {
       donnees <- donnees_seer()
-      effectifs <- table(donnees$status)
+      effectifs <- table(donnees$Status)
       
       donnees_distribution <- data.frame(
         Variable = names(effectifs),

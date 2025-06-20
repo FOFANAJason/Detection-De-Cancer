@@ -6,7 +6,7 @@
 # Version: 1.0
 # Date: 2025
 # 
-# Description: Application Shiny pour l'analyse des données de biopsies
+# Description: Application Shiny pour l'analyse des données de biopsies  
 # mammaires dans le domaine de la data science
 # 
 # Cette application permet:

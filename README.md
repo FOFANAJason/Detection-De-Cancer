@@ -20,8 +20,9 @@ L'application permet également d'explorer les données, de visualiser les distr
 
 L'application est structurée en deux fichiers distincts :
 
-- `ui.R` : Définit l’interface utilisateur (UI)
-- `server.R` : Contient la logique de traitement (backend)
+- `interface_utilisateur.R` : Définit l’interface utilisateur (UI)
+- `logique_serveur.R` : Contient la logique de traitement (backend)
+- `app.R`: Le main du projet qui regeroupe les deuxi fichier ui et backend
 
 ---
 
