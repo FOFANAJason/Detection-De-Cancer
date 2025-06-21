@@ -1720,6 +1720,46 @@ serveur_principal <- function(input, output, session) {
       saveRDS(modele_entraine(), fichier)
     }
   )
+  # Fonction pour générer le rapport de survie
+  output$telecharger_rapport_survie <- downloadHandler(
+    filename = function() {
+      paste0("rapport_survie_", Sys.Date(), ".html")
+    },
+    content = function(file) {
+      # Créer le contenu HTML du rapport
+      rapport <- paste0(
+        
+        "🏥 PRÉDICTION DE SURVIE :\n\n",
+        "• Niveau de risque : ", resultat_survie$niveau_risque, "\n",
+        "• Score de risque : ", resultat_survie$score_risque, "/15\n",
+        "• Survie médiane estimée : ", round(resultat_survie$survie_estimee), " mois\n",
+        "• Probabilité de survie à 5 ans : ", round(resultat_survie$prob_survie_5ans * 100, 1), "%\n\n",
+        "📊 FACTEURS ANALYSÉS :\n",
+        "• Âge : ", input$age_patient, " ans\n",
+        "• Origine ethnique : ", input$race_patient, "\n",
+        "• Stade tumoral : ", input$t_stage, "\n",
+        "• Atteinte ganglionnaire : ", input$n_stage, "\n",
+        "• Grade histologique : ", input$grade_tumeur, "\n",
+        "• Taille tumorale : ", input$taille_tumeur, " mm\n",
+        "• Statut œstrogène : ", input$statut_estrogene, "\n",
+        "• Statut progestérone : ", input$statut_progesterone, "\n\n",
+        "💡 INTERPRÉTATION CLINIQUE :\n",
+        if (resultat_survie$niveau_risque == "FAIBLE") {
+          "Pronostic favorable avec une excellente probabilité de survie à long terme. Surveillance de routine recommandée."
+        } else if (resultat_survie$niveau_risque == "MODÉRÉ") {
+          "Pronostic intermédiaire nécessitant un suivi régulier et une thérapie adjuvante adaptée."
+        } else {
+          "Pronostic défavorable nécessitant une prise en charge multidisciplinaire intensive et un suivi rapproché."
+        },
+        "\n\n⚠️ AVERTISSEMENT MÉDICAL :\n",
+        "Cette prédiction est basée sur des modèles statistiques et ne remplace pas l'évaluation clinique d'un oncologue."
+        
+      )
+      
+      # Écrire le fichier HTML
+      writeLines(rapport, file)
+    }
+  )
 }
 
 # Export du serveur
