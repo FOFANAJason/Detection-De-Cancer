@@ -425,10 +425,19 @@ interface_principale <- navbarPage(
                  class = "conteneur-graphique",
                  h4(icon("database"), "Référentiel de Données", style = "color: #2c3e50; margin-bottom: 15px;"),
                  div(style = "line-height: 1.8;",
-                     p(strong("Source primaire:"), " Wisconsin Breast Cancer + SEER"),
+                     p(strong("Wisconsin Breast Cancer")),
+                     p(strong("Source:"), " UCI Repository"),
+                     p(strong("Auteurs:"), " Dr. William Wolberg, Olvi Mangasarian, W. Rue, Rue Nick"),
+                     p(strong("Période de collecte:"), "1995"),
                      p(strong("Institution:"), " Hôpitaux Universitaires du Wisconsin"),
-                     p(strong("Période de collecte:"), " ... + ..."),
-                     p(strong("Responsable scientifique:"), " ... ..."),
+                     hr(style = "margin: 10px 0;"),
+                     p(strong("SEER")),
+                     p(strong("Source:"), " Programme SEER (National Cancer Institute, USA"),
+                     p(strong("Période de collecte:"), "1973-2015"),
+                     p(strong("Institution:"), " National Cancer Institute"),
+                     hr(style = "margin: 10px 0;"),
+                     p(strong("Source primaire:"), " Wisconsin Breast Cancer + SEER"),
+                     p(strong("Responsable scientifique:"), " Dr. William H. Wolberg, Olvi L. Mangasarian, W. Nick Street"),
                      hr(style = "margin: 15px 0;"),
                      h5("Données intégrées:", style = "color: #2c3e50; margin-bottom: 10px;"),
                      tags$ul(
@@ -988,140 +997,147 @@ interface_principale <- navbarPage(
   # ===============================================================================
   # ONGLET 5: PRÉDICTION DE SURVIE
   # ===============================================================================
-  tabPanel(
-    title = div(icon("clock"), "Prédiction de Survie"),
-    fluidPage(
-      div(
-        class = "entete-section",
-        h2(
-          tags$img(
-            src = "cancer_de_sein.png", 
-            height = "30px", 
-            width = "30px",
-            style = "margin-right: 12px; border-radius: 6px;"
-          ),
+  
+tabPanel(
+  title = div(icon("clock"), "Prédiction de Survie"),
+  fluidPage(
+    div(
+      class = "entete-section",
+      h2(
+        tags$img(
+          src = "cancer_de_sein.png", 
+          height = "30px", 
+          width = "30px",
+          style = "margin-right: 12px; border-radius: 6px;"
+        ),
+        "Analyse de Survie et Pronostic", 
+        style = "margin: 0; font-weight: 400; font-size: 2.2em;"),
+      p("Estimation de la survie basée sur les données cliniques SEER pour les cas malins", 
+        style = "margin: 8px 0 0 0; opacity: 0.9; font-size: 1.1em;")
+    ),
+    
+    sidebarLayout(
+      sidebarPanel(
+        width = 3,
+        div(
+          class = "carte-information",
+          h4(icon("user-md"), "Profil Patient", 
+             style = "margin-top: 0; color: white;"),
           
-          "Analyse de Survie et Pronostic", 
-           style = "margin: 0; font-weight: 400; font-size: 2.2em;"),
-        
-        
-        p("Estimation de la survie basée sur les données cliniques SEER pour les cas malins", 
-          style = "margin: 8px 0 0 0; opacity: 0.9; font-size: 1.1em;")
+          numericInput("age_patient", "Âge du patient :", 
+                       value = 55, min = 18, max = 100),
+          
+          selectInput("race_patient", "Origine ethnique:",
+                      choices = c("White", "Black", "Other"),
+                      selected = "White"),
+          
+          selectInput("statut_marital", "Statut marital:",
+                      choices = c("Married", "Single", "Divorced", "Widowed"),
+                      selected = "Married"),
+          
+          selectInput("t_stage", "Stade T (taille tumorale):",
+                      choices = c("T1", "T2", "T3", "T4"),
+                      selected = "T2"),
+          
+          selectInput("n_stage", "Stade N (ganglions):",
+                      choices = c("N0", "N1", "N2", "N3"),
+                      selected = "N0"),
+          
+          selectInput("grade_tumeur", "Grade histologique:",
+                      choices = c("Grade I", "Grade II", "Grade III"),
+                      selected = "Grade II"),
+          
+          numericInput("taille_tumeur", "Taille tumorale (mm):", 
+                       value = 25, min = 1, max = 100),
+          
+          selectInput("statut_estrogene", "Statut œstrogène:",
+                      choices = c("Positive", "Negative"),
+                      selected = "Positive"),
+          
+          selectInput("statut_progesterone", "Statut progestérone:",
+                      choices = c("Positive", "Negative"),
+                      selected = "Positive"),
+          
+          actionButton("predire_survie",
+                       "Prédire la Survie",
+                       class = "bouton-survie",
+                       style = "width: 100%; margin-top: 15px; background: linear-gradient(135deg, #27ae60, #229954);")
+        )
       ),
       
-      sidebarLayout(
-        sidebarPanel(
-          width = 3,
+      mainPanel(
+        width = 9,
+        
+        # Résultats de prédiction de survie
+        conditionalPanel(
+          condition = "input.predire_survie > 0",
           div(
-            class = "carte-information",
-            h4(icon("user-md"), "Profil Patient", 
-               style = "margin-top: 0; color: white;"),
+            class = "carte-interpretation",
+            div(class = "titre-interpretation", 
+                icon("clock"), " PRÉDICTION DE SURVIE"),
+            withSpinner(verbatimTextOutput("resultat_prediction_survie"), 
+                        color = "#ffffff", type = 4),
             
-            numericInput("age_patient", "Âge du patient :", 
-                         value = 55, min = 18, max = 100),
-            
-            selectInput("race_patient", "Origine ethnique:",
-                        choices = c("White", "Black", "Other"),
-                        selected = "White"),
-            
-            selectInput("statut_marital", "Statut marital:",
-                        choices = c("Married", "Single", "Divorced", "Widowed"),
-                        selected = "Married"),
-            
-            selectInput("t_stage", "Stade T (taille tumorale):",
-                        choices = c("T1", "T2", "T3", "T4"),
-                        selected = "T2"),
-            
-            selectInput("n_stage", "Stade N (ganglions):",
-                        choices = c("N0", "N1", "N2", "N3"),
-                        selected = "N0"),
-            
-            selectInput("grade_tumeur", "Grade histologique:",
-                        choices = c("Grade I", "Grade II", "Grade III"),
-                        selected = "Grade II"),
-            
-            numericInput("taille_tumeur", "Taille tumorale (mm):", 
-                         value = 25, min = 1, max = 100),
-            
-            selectInput("statut_estrogene", "Statut œstrogène:",
-                        choices = c("Positive", "Negative"),
-                        selected = "Positive"),
-            
-            selectInput("statut_progesterone", "Statut progestérone:",
-                        choices = c("Positive", "Negative"),
-                        selected = "Positive"),
-            
-            actionButton("predire_survie",
-                         "Prédire la Survie",
-                         class = "bouton-survie",
-                         style = "width: 100%; margin-top: 15px; background: linear-gradient(135deg, #27ae60, #229954);")
+            # Ajout du bouton de téléchargement ici
+            div(
+              style = "text-align: center; margin-top: 20px;",
+              downloadButton("telecharger_rapport_survie",
+                             "Télécharger le Rapport de Survie",
+                             class = "bouton-personnalise",
+                             style = "width: 80%; margin-top: 15px;")
+            )
           )
         ),
         
-        mainPanel(
-          width = 9,
-          
-          # Résultats de prédiction de survie
-          conditionalPanel(
-            condition = "input.predire_survie > 0",
-            div(
-              class = "carte-interpretation",
-              div(class = "titre-interpretation", 
-                  icon("clock"), " PRÉDICTION DE SURVIE"),
-              withSpinner(verbatimTextOutput("resultat_prediction_survie"), 
-                          color = "#ffffff", type = 4)
+        # Graphiques de survie
+        conditionalPanel(
+          condition = "input.predire_survie > 0",
+          fluidRow(
+            column(6,
+                   div(
+                     class = "conteneur-graphique",
+                     h4(icon("chart-line"), "Courbe de Survie Kaplan-Meier", style = "color: #2c3e50;"),
+                     withSpinner(plotlyOutput("courbe_survie_km", height = "400px"), 
+                                 color = "#fd79a8", type = 4)
+                   )
+            ),
+            column(6,
+                   div(
+                     class = "conteneur-graphique",
+                     h4(icon("users"), "Comparaison par Groupes", style = "color: #2c3e50;"),
+                     withSpinner(plotlyOutput("survie_par_groupes", height = "400px"), 
+                                 color = "#fdcb6e", type = 4)
+                   )
             )
-          ),
-          
-          # Graphiques de survie
-          conditionalPanel(
-            condition = "input.predire_survie > 0",
-            fluidRow(
-              column(6,
-                     div(
-                       class = "conteneur-graphique",
-                       h4(icon("chart-line"), "Courbe de Survie Kaplan-Meier", style = "color: #2c3e50;"),
-                       withSpinner(plotlyOutput("courbe_survie_km", height = "400px"), 
-                                   color = "#fd79a8", type = 4)
-                     )
-              ),
-              column(6,
-                     div(
-                       class = "conteneur-graphique",
-                       h4(icon("users"), "Comparaison par Groupes", style = "color: #2c3e50;"),
-                       withSpinner(plotlyOutput("survie_par_groupes", height = "400px"), 
-                                   color = "#fdcb6e", type = 4)
-                     )
-              )
-            )
-          ),
-          
-          # Facteurs pronostiques
-          conditionalPanel(
-            condition = "input.predire_survie > 0",
-            fluidRow(
-              column(6,
-                     div(
-                       class = "conteneur-graphique",
-                       h4(icon("chart-bar"), "Facteurs Pronostiques", style = "color: #2c3e50;"),
-                       withSpinner(plotlyOutput("facteurs_pronostiques", height = "400px"), 
-                                   color = "#a29bfe", type = 4)
-                     )
-              ),
-              column(6,
-                     div(
-                       class = "conteneur-graphique",
-                       h4(icon("table"), "Données SEER - Aperçu", style = "color: #2c3e50;"),
-                       withSpinner(DT::dataTableOutput("apercu_donnees_seer"), 
-                                   color = "#74b9ff", type = 4)
-                     )
-              )
+          )
+        ),
+        
+        # Facteurs pronostiques
+        conditionalPanel(
+          condition = "input.predire_survie > 0",
+          fluidRow(
+            column(6,
+                   div(
+                     class = "conteneur-graphique",
+                     h4(icon("chart-bar"), "Facteurs Pronostiques", style = "color: #2c3e50;"),
+                     withSpinner(plotlyOutput("facteurs_pronostiques", height = "400px"), 
+                                 color = "#a29bfe", type = 4)
+                   )
+            ),
+            column(6,
+                   div(
+                     class = "conteneur-graphique",
+                     h4(icon("table"), "Données SEER - Aperçu", style = "color: #2c3e50;"),
+                     withSpinner(DT::dataTableOutput("apercu_donnees_seer"), 
+                                 color = "#74b9ff", type = 4)
+                   )
             )
           )
         )
       )
     )
-  ),
+  )
+),
   
   # ===============================================================================
   # ONGLET 6: GESTION DES DONNÉES
