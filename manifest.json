@@ -1,0 +1,28 @@
+{
+  "packages": [
+    "shiny",
+    "dplyr",
+    "ggplot2",
+    "corrplot",
+    "plotly",
+    "DT",
+    "factoextra",
+    "FactoMineR",
+    "moments",
+    "car",
+    "caret",
+    "randomForest",
+    "e1071",
+    "gbm",
+    "pROC",
+    "VIM",
+    "survival",
+    "survminer",
+    "shinydashboard",
+    "shinythemes",
+    "shinyWidgets",
+    "shinycssloaders",
+    "grid",
+    "gridExtra"
+  ]
+}
