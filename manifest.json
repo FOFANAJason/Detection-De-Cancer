@@ -1,4 +1,10 @@
 {
+  "metadata": {
+    "appmode": "shiny",
+    "primary_rmd": null,
+    "primary_html": null,
+    "content_category": "application"
+  },
   "packages": [
     "shiny",
     "dplyr",
