@@ -29,6 +29,11 @@ library(pROC)
 library(VIM)
 library(survival)
 library(survminer)
+source("www/rapport_survie.R")
+# install.packages("rmarkdown")
+# install.packages("tinytex")
+# tinytex::install_tinytex()
+
 
 # ===============================================================================
 # FONCTIONS UTILITAIRES POUR L'ANALYSE STATISTIQUE
@@ -1334,7 +1339,150 @@ serveur_principal <- function(input, output, session) {
       "Cette prédiction est basée sur des modèles statistiques et ne remplace pas l'évaluation clinique d'un oncologue."
     )
     
+    
     return(resultat_texte)
+  })
+  
+  output$telecharger_rapport_survie <- downloadHandler(
+    filename = function() {
+      paste0("rapport_survie_", Sys.Date(), ".pdf")
+    },
+    content = function(file) {
+      resultat_survie <- predire_survie_patient(
+        age = input$age_patient,
+        race = input$race_patient,
+        t_stage = input$t_stage,
+        n_stage = input$n_stage,
+        grade = input$grade_tumeur,
+        tumor_size = input$taille_tumeur,
+        estrogen_status = input$statut_estrogene,
+        progesterone_status = input$statut_progesterone
+      )
+      
+      inputs <- reactiveValuesToList(input)  # Pour passer tous les inputs à la fonction
+      generer_rapport_survie(resultat_survie, inputs, filename = file)
+    }
+  )
+  
+  
+
+  
+
+  
+  
+  # Courbe de survie Kaplan-Meier
+  output$courbe_survie_km <- renderPlotly({
+    req(input$predire_survie > 0)
+    
+    # Simulation d'une courbe de survie basée sur les données SEER
+    temps <- seq(0, 120, by = 1)
+    
+    # Courbes de survie par niveau de risque
+    survie_faible <- exp(-0.005 * temps)
+    survie_modere <- exp(-0.012 * temps)
+    survie_eleve <- exp(-0.025 * temps)
+    
+    df_survie <- data.frame(
+      Temps = rep(temps, 3),
+      Survie = c(survie_faible, survie_modere, survie_eleve),
+      Groupe = rep(c("Risque Faible", "Risque Modéré", "Risque Élevé"), each = length(temps))
+    )
+    
+    graphique_survie <- ggplot(df_survie, aes(x = Temps, y = Survie, color = Groupe)) +
+      geom_line(size = 1.5) +
+      scale_color_manual(values = c("Risque Faible" = "#27ae60", 
+                                    "Risque Modéré" = "#f39c12", 
+                                    "Risque Élevé" = "#e74c3c")) +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+        axis.title = element_text(size = 13, face = "bold"),
+        axis.text = element_text(size = 11),
+        legend.title = element_text(size = 12, face = "bold")
+      ) +
+      labs(title = "Courbes de Survie Kaplan-Meier",
+           x = "Temps (mois)", y = "Probabilité de survie", color = "Niveau de Risque") +
+      ylim(0, 1)
+    
+    ggplotly(graphique_survie)
+  })
+  
+  # Survie par groupes
+  output$survie_par_groupes <- renderPlotly({
+    req(input$predire_survie > 0)
+    
+    # Analyse de survie par différents facteurs
+    facteurs <- c("Grade I", "Grade II", "Grade III", "T1-T2", "T3-T4", "N0", "N+")
+    survie_5ans <- c(0.95, 0.85, 0.70, 0.90, 0.65, 0.88, 0.72)
+    
+    df_groupes <- data.frame(
+      Facteur = facteurs,
+      Survie_5ans = survie_5ans
+    )
+    
+    graphique_groupes <- ggplot(df_groupes, aes(x = reorder(Facteur, Survie_5ans), y = Survie_5ans, fill = Facteur)) +
+      geom_col(alpha = 0.8) +
+      scale_fill_brewer(type = "qual", palette = "Set3") +
+      coord_flip() +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+        axis.title = element_text(size = 13, face = "bold"),
+        axis.text = element_text(size = 11),
+        legend.position = "none"
+      ) +
+      labs(title = "Survie à 5 ans par Facteur Pronostique",
+           x = "Facteurs", y = "Probabilité de survie à 5 ans") +
+      ylim(0, 1)
+    
+    ggplotly(graphique_groupes)
+  })
+  
+  # Facteurs pronostiques  
+  output$facteurs_pronostiques <- renderPlotly({
+    # Analyse de l'impact des différents facteurs
+    facteurs <- c("Âge > 65", "Grade III", "T3-T4", "N+", "Taille > 5cm", "ER-", "PR-")
+    hazard_ratio <- c(1.8, 2.2, 3.1, 2.8, 1.9, 1.6, 1.4)
+    
+    df_facteurs <- data.frame(
+      Facteur = facteurs,
+      Hazard_Ratio = hazard_ratio
+    ) %>%
+      arrange(Hazard_Ratio)
+    
+    graphique_facteurs <- ggplot(df_facteurs, aes(x = reorder(Facteur, Hazard_Ratio), y = Hazard_Ratio)) +
+      geom_col(fill = "#fd79a8", alpha = 0.8) +
+      geom_hline(yintercept = 1, linetype = "dashed", color = "black") +
+      coord_flip() +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+        axis.title = element_text(size = 13, face = "bold"),
+        axis.text = element_text(size = 11)
+      ) +
+      labs(title = "Facteurs Pronostiques (Hazard Ratios)",
+           x = "Facteurs", y = "Hazard Ratio")
+    
+    ggplotly(graphique_facteurs)
+  })
+  
+  # Aperçu des données SEER
+  output$apercu_donnees_seer <- renderDT({
+    datatable(
+      head(donnees_seer(), 100),
+      options = list(
+        pageLength = 10,
+        scrollX = TRUE,
+        dom = 'Bfrtip',
+        buttons = c('copy', 'csv', 'excel')
+      ),
+      class = 'cell-border stripe hover compact',
+      rownames = FALSE
+    ) %>%
+      formatStyle('Status',
+                  backgroundColor = styleEqual(c('Alive', 'Dead'), 
+                                               c('#d4edda', '#f8d7da')),
+                  fontWeight = 'bold')
   })
   
   # Courbe de survie Kaplan-Meier
@@ -1718,46 +1866,6 @@ serveur_principal <- function(input, output, session) {
     content = function(fichier) {
       req(modele_entraine())
       saveRDS(modele_entraine(), fichier)
-    }
-  )
-  # Fonction pour générer le rapport de survie
-  output$telecharger_rapport_survie <- downloadHandler(
-    filename = function() {
-      paste0("rapport_survie_", Sys.Date(), ".html")
-    },
-    content = function(file) {
-      # Créer le contenu HTML du rapport
-      rapport <- paste0(
-        
-        "🏥 PRÉDICTION DE SURVIE :\n\n",
-        "• Niveau de risque : ", resultat_survie$niveau_risque, "\n",
-        "• Score de risque : ", resultat_survie$score_risque, "/15\n",
-        "• Survie médiane estimée : ", round(resultat_survie$survie_estimee), " mois\n",
-        "• Probabilité de survie à 5 ans : ", round(resultat_survie$prob_survie_5ans * 100, 1), "%\n\n",
-        "📊 FACTEURS ANALYSÉS :\n",
-        "• Âge : ", input$age_patient, " ans\n",
-        "• Origine ethnique : ", input$race_patient, "\n",
-        "• Stade tumoral : ", input$t_stage, "\n",
-        "• Atteinte ganglionnaire : ", input$n_stage, "\n",
-        "• Grade histologique : ", input$grade_tumeur, "\n",
-        "• Taille tumorale : ", input$taille_tumeur, " mm\n",
-        "• Statut œstrogène : ", input$statut_estrogene, "\n",
-        "• Statut progestérone : ", input$statut_progesterone, "\n\n",
-        "💡 INTERPRÉTATION CLINIQUE :\n",
-        if (resultat_survie$niveau_risque == "FAIBLE") {
-          "Pronostic favorable avec une excellente probabilité de survie à long terme. Surveillance de routine recommandée."
-        } else if (resultat_survie$niveau_risque == "MODÉRÉ") {
-          "Pronostic intermédiaire nécessitant un suivi régulier et une thérapie adjuvante adaptée."
-        } else {
-          "Pronostic défavorable nécessitant une prise en charge multidisciplinaire intensive et un suivi rapproché."
-        },
-        "\n\n⚠️ AVERTISSEMENT MÉDICAL :\n",
-        "Cette prédiction est basée sur des modèles statistiques et ne remplace pas l'évaluation clinique d'un oncologue."
-        
-      )
-      
-      # Écrire le fichier HTML
-      writeLines(rapport, file)
     }
   )
 }
