@@ -220,6 +220,14 @@ interface_principale <- navbarPage(
         text-transform: uppercase;
         letter-spacing: 0.5px;
         box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        
+        width: 100%;
+        margin-top: 15px;
+        font-size: clamp(8px, 1.5vw, 12px);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        padding: 5px;
       }
       
       .bouton-personnalise:hover {
@@ -240,6 +248,16 @@ interface_principale <- navbarPage(
         text-transform: uppercase;
         letter-spacing: 0.5px;
         box-shadow: 0 4px 15px rgba(253, 121, 168, 0.3);
+        
+        
+        background: linear-gradient(135deg, #27ae60, #229954);
+        width: 100%;
+        margin-top: 15px;
+        font-size: clamp(8px, 1.5vw, 12px);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        padding: 5px;
       }
       
       .bouton-survie:hover {
@@ -1060,8 +1078,8 @@ tabPanel(
           
           actionButton("predire_survie",
                        "Prédire la Survie",
-                       class = "bouton-survie",
-                       style = "width: 100%; margin-top: 15px; background: linear-gradient(135deg, #27ae60, #229954);")
+                       class = "bouton-survie"
+          )
         )
       ),
       
