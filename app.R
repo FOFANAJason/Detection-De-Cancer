@@ -16,10 +16,13 @@
 # - L'interprétation automatique des résultats
 # - La gestion et l'export des données et modèles
 # ===============================================================================
+list.files()
 
 # Chargement des composants
 source("interface_utilisateur.R")
 source("logique_serveur.R")
 
+rsconnect::writeManifest()
+list.files()
 # Lancement de l'application
 shinyApp(ui = ui, server = server)
