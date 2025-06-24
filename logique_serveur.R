@@ -30,9 +30,6 @@ library(VIM)
 library(survival)
 library(survminer)
 source("www/rapport_survie.R")
-# install.packages("rmarkdown")
-# install.packages("tinytex")
-# tinytex::install_tinytex()
 
 
 # ===============================================================================
@@ -1079,6 +1076,13 @@ serveur_principal <- function(input, output, session) {
     if(input$optimiser_hyperparametres) {
       if(input$algorithme_ml == "rf") {
         grille_parametres <- expand.grid(mtry = c(2, 4, 6, 8))
+      } else if(input$algorithme_ml == "gbm") {
+        grille_parametres <- expand.grid(
+          n.trees = c(100, 200),
+          interaction.depth = c(1, 3),
+          shrinkage = c(0.1, 0.01),
+          n.minobsinnode = c(10)
+        )
       } else {
         grille_parametres <- NULL
       }
@@ -1093,8 +1097,8 @@ serveur_principal <- function(input, output, session) {
             method = input$algorithme_ml,
             trControl = controle_cv,
             tuneGrid = grille_parametres,
-            metric = "ROC",
-            family = if (input$algorithme_ml == "glm") binomial() else NULL
+            metric = "ROC"
+            # family = if (input$algorithme_ml == "glm") binomial() else NULL
       )
     }, error = function(e) {
       showNotification(paste("Erreur lors de l'entraînement:", e$message), type = "message")
@@ -1217,7 +1221,7 @@ serveur_principal <- function(input, output, session) {
     modele <- modele_entraine()
     
     # Extraction de l'importance selon le type de modèle
-    if(input$algorithme_ml %in% c("rf")) {
+    if(input$algorithme_ml %in% c("rf", "gbm")) {
       importance_vars <- varImp(modele)$importance
       importance_vars$Variable <- rownames(importance_vars)
       importance_vars <- importance_vars[order(-importance_vars$Overall), ]
@@ -1616,7 +1620,7 @@ serveur_principal <- function(input, output, session) {
       HTML(paste0(
         "<h4><i class='fa fa-database'></i> Base de Données Wisconsin sur le Cancer du Sein</h4>",
         "<p><strong>Institution d'origine:</strong> Hôpitaux Universitaires du Wisconsin, Madison</p>",
-        "<p><strong>Période de collecte:</strong> 1991-1995</p>",
+        "<p><strong>Période de collecte:</strong> 1995</p>",
         "<p><strong>Responsable scientifique:</strong> Dr. William H. Wolberg, MD</p>",
         "<p><strong>Type d'étude:</strong> Étude rétrospective observationnelle</p>",
         "<hr>",
@@ -1639,7 +1643,7 @@ serveur_principal <- function(input, output, session) {
       HTML(paste0(
         "<h4><i class='fa fa-database'></i> Base de Données SEER sur le Cancer du Sein</h4>",
         "<p><strong>Institution d'origine:</strong> National Cancer Institute (NCI)</p>",
-        "<p><strong>Période de collecte:</strong> 2000-2018</p>",
+        "<p><strong>Période de collecte:</strong> 1973-2015</p>",
         "<p><strong>Programme:</strong> Surveillance, Epidemiology, and End Results</p>",
         "<p><strong>Type d'étude:</strong> Registre de surveillance épidémiologique</p>",
         "<hr>",

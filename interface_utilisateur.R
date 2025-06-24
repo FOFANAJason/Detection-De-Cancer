@@ -32,7 +32,7 @@ interface_principale <- navbarPage(
       width = "30px",
       style = "margin-right: 12px; border-radius: 6px;"
     ),
-    "Plateforme d'Analyse Oncologique"
+    "Plateforme d'Analyse Oncologique mammaire"
   ),
   theme = shinytheme("cosmo"),
   
@@ -454,9 +454,6 @@ interface_principale <- navbarPage(
                      p(strong("Période de collecte:"), "1973-2015"),
                      p(strong("Institution:"), " National Cancer Institute"),
                      hr(style = "margin: 10px 0;"),
-                     p(strong("Source primaire:"), " Wisconsin Breast Cancer + SEER"),
-                     p(strong("Responsable scientifique:"), " Dr. William H. Wolberg, Olvi L. Mangasarian, W. Nick Street"),
-                     hr(style = "margin: 15px 0;"),
                      h5("Données intégrées:", style = "color: #2c3e50; margin-bottom: 10px;"),
                      tags$ul(
                        style = "font-size: 0.95em; color: #6c757d;",
@@ -904,7 +901,8 @@ interface_principale <- navbarPage(
                         "Algorithme d'apprentissage :",
                         choices = list(
                           "Régression Logistique" = "glm",
-                          "Forêt Aléatoire" = "rf"
+                          "Forêt Aléatoire" = "rf",
+                          "Gradient Boosting" = "gbm"
                         )),
             
             sliderInput("proportion_entrainement",

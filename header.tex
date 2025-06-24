@@ -1,0 +1,21 @@
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage{xcolor}
+
+% Définition des couleurs
+\definecolor{myblue}{RGB}{102, 126, 234}
+\definecolor{mypink}{RGB}{231, 76, 60}
+
+% Configuration de l'en-tête et du pied de page
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\textcolor{myblue}{\textbf{Application Cancer du Sein}}}
+\fancyhead[R]{\textcolor{mypink}{\textbf{\thepage}}}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{myblue}\leaders\hrule height \headrulewidth\hfill}}
+
+% Configuration du pied de page
+\fancyfoot[C]{\textcolor{gray}{\small Fofana \& Yake - 2025}}
+
+% Espacement
+\setlength{\headheight}{14pt}

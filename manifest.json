@@ -4991,7 +4991,7 @@
         "Maintainer": "Yihui Xie <xie@yihui.name>",
         "Repository": "CRAN",
         "Date/Publication": "2025-04-15 15:50:03 UTC",
-        "Built": "R 4.5.0; ; 2025-06-21 01:22:01 UTC; windows"
+        "Built": "R 4.5.0; ; 2025-06-23 01:27:09 UTC; windows"
       }
     },
     "tzdb": {
@@ -5340,11 +5340,14 @@
     "Dataset/seer-breast-cancer-dataset.csv": {
       "checksum": "fc4e518f026aacdfc5339740349d233f"
     },
+    "header.tex": {
+      "checksum": "1210e294273ebc4bbc9f39aabdc29899"
+    },
     "interface_utilisateur.R": {
-      "checksum": "9b52fd8401f4bfb8cde9b0c3a8fc464c"
+      "checksum": "87526ad633efc9053e0f7c7ff7b129a9"
     },
     "logique_serveur.R": {
-      "checksum": "83dd6a28f71ecee4723f510d24308e19"
+      "checksum": "67a6c2a1fba0097e96505ead3b46cc50"
     },
     "README.md": {
       "checksum": "351fd77506cb4b5ae4dc1710def67d19"
